@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>مرتين في النص</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0f0f0f"><link rel="icon" href="icon-192.png"><link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f1e7;--c:#fff;--t:#1d1a17;--m:#7a7064;--o:#e2573a;--g:#2bb48f;--p:#a23d7d;--y:#b9811c;--l:#0002}
+@media(prefers-color-scheme:dark){:root{--bg:#0f0f0f;--c:#1e1b18;--t:#f3ede4;--m:#a39a8e;--l:#fff2}}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Readex Pro',sans-serif;background:var(--bg);color:var(--t);padding-top:env(safe-area-inset-top)}
+#app{padding:12px 0 110px;min-height:100vh}.m{color:var(--m)}small{font-size:12px}b.o,.o{color:var(--o)}
+.av{border-radius:50%;background:linear-gradient(135deg,#c4694a,#3fa387);display:inline-grid;place-items:center;color:#fff;font-weight:600;object-fit:cover;font-style:normal;vertical-align:middle}
+.top{display:flex;justify-content:space-between;align-items:center;padding:0 16px}.pill{border:1px solid var(--l);border-radius:20px;padding:6px 14px;font-size:13px;background:var(--c)}
+h1{font-size:30px;padding:8px 16px 0;line-height:1.4}h2{font-size:28px;padding:8px 16px}
+.cd{background:var(--c);border:1px solid var(--l);border-radius:26px;padding:18px;margin:12px 16px;display:block;color:inherit;cursor:pointer}
+.cd h3{font-size:22px;margin:10px 0 4px}.ic{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:24px;color:#fff}
+.pn{background:var(--o);color:#fff;border-radius:30px;padding:22px;margin:16px}.pn h3{font-size:26px;margin:8px 0}.pn.gr{background:#6b5e4f}
+.g2{display:flex;gap:12px;margin:0 16px}.g2 .cd{flex:1;margin:12px 0}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:14px;font:inherit;font-weight:600;background:var(--o);color:#fff;margin-top:8px;cursor:pointer}.btn.s{background:var(--l);color:var(--t)}.btn.gn{background:var(--g)}
+.row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--l);border-radius:18px;margin-top:8px}.row>.gr1{flex:1}
+.dy{background:var(--l);border-radius:12px;padding:6px 10px;text-align:center;min-width:56px}
+.tag{background:#e2573a33;color:var(--o);border-radius:14px;padding:4px 10px;font-size:12px}.tag.g{background:#2bb48f33;color:var(--g)}
+nav{position:fixed;bottom:0;inset-inline:0;display:flex;justify-content:space-around;background:var(--c);border:1px solid var(--l);border-radius:28px;margin:0 12px calc(10px + env(safe-area-inset-bottom));padding:8px}
+nav a{flex:1;text-align:center;font-size:11px;padding:6px 0;border-radius:18px;color:var(--m);cursor:pointer}nav a span{display:block;font-size:20px}nav a.on{background:var(--o);color:#fff}
+.ch{display:flex;flex-direction:column;height:100vh}.ch .hd{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--l)}
+#ms{flex:1;overflow:auto;padding:10px 12px}.r{display:flex;gap:6px;margin-top:6px;align-items:flex-end}.r.me{flex-direction:row-reverse}
+.b{background:var(--c);border:1px solid var(--l);padding:9px 13px;border-radius:18px;max-width:78vw;word-break:break-word;user-select:none}.me .b{background:var(--o);color:#fff;border:0}.b.big{font-size:44px;background:var(--o)}
+.rc{font-size:12px;margin-top:2px}.sep{text-align:center;font-size:12px;color:var(--m);margin:12px}.sy{text-align:center;font-size:13px;color:var(--m);margin:8px 0}
+.in{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--l)}
+input,textarea,select{font:inherit;color:var(--t);background:var(--c);border:1px solid var(--l);border-radius:16px;padding:12px;width:100%}.in input{flex:1}.in button{width:46px;border:0;border-radius:50%;background:var(--o);color:#fff;font-size:20px}
+#m:not(:empty){position:fixed;inset:0;background:#000a;display:flex;align-items:flex-end;z-index:9}.sh{background:var(--bg);border-radius:28px 28px 0 0;padding:20px;width:100%;max-height:85vh;overflow:auto}
+.em{display:flex;justify-content:space-around;font-size:34px}#tt{position:fixed;top:20px;inset-inline:16px;background:#222;color:#fff;border-radius:16px;padding:12px;z-index:99;display:none;text-align:center}
+.bar{height:10px;border-radius:5px;background:#e2573a;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--g)}
+</style></head><body><div id=app></div><div id=m></div><div id=tt></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SB='https://YOUR-PROJECT.supabase.co',KEY='YOUR_ANON_KEY',VAPID='';
+const sb=supabase.createClient(SB,KEY),A=document.getElementById('app'),M=document.getElementById('m'),$=s=>document.querySelector(s);
+const ld=(d=new Date())=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10),nid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
+const E=['👍','❤️','😂','😮','😢','😡'],esc=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+let S=JSON.parse(localStorage.S||'null')||{members:[],queue:[],days:{},msgs:[],fts:[],votes:{},u:0},ME,U,tab='home',st={},ON=[];
+const mem=i=>S.members.find(m=>m.id==i)||{name:'؟'},ac=()=>S.members.filter(m=>!m.del),D=d=>S.days[d]||(S.days[d]={s:'',att:{},pass:[]});
+const sys=t=>S.msgs.push({id:nid(),sys:1,text:t,t:Date.now(),re:{},rd:{}});
+const av=(m,s=40)=>m.av?`<img class=av style="width:${s}px;height:${s}px" src="${m.av}">`:`<i class=av style="width:${s}px;height:${s}px;font-size:${s/2.3}px">${esc((m.name||'?')[0])}</i>`;
+function toast(t){const e=$('#tt');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',3000)}
+function mrg(l,s){const by=(x,y,f)=>{const o={};[...(x||[]),...(y||[])].forEach(i=>o[i.id]=f&&o[i.id]?f(o[i.id],i):i);return Object.values(o)};
+const o=l.u>=(s.u||0)?{...s,...l}:{...l,...s};o.msgs=by(s.msgs,l.msgs,(a,b)=>({...a,...b,re:{...a.re,...b.re},rd:{...a.rd,...b.rd}})).sort((a,b)=>a.t-b.t);
+o.fts=by(s.fts,l.fts);o.members=by(s.members,l.members,(a,b)=>({...a,...b}));o.votes={...s.votes,...l.votes};return o}
+function put(){localStorage.S=JSON.stringify(S)}
+async function sync(){if(!navigator.onLine||!U)return;try{const{data}=await sb.from('app_state').select('data').eq('id','main').maybeSingle();if(data&&data.data){S=mrg(S,data.data);put()}await sb.from('app_state').upsert({id:'main',data:S,updated_at:new Date()})}catch(e){}}
+function save(){S.u=Date.now();put();R();sync()}
+function pass(d,o){mem(o).p=1;d.pass.push(o);const q=S.queue;if(q.length>1)[q[0],q[1]]=[q[1],q[0]]}
+function cancel(d,o){mem(o).p=0;d.s='cancel';S.queue=S.queue.filter(x=>x!=o).concat(o)}
+function rot(h){mem(h).p=0;if(S.queue.includes(h))S.queue=S.queue.filter(x=>x!=h).concat(h)}
+function roll(){const t=ld();let p=S.proc||t,c=0;for(let i=0;i<31&&p<t;i++){const d=D(p);if(!d.rolled){d.rolled=1;c=1;
+if(d.s=='ok'){rot(d.host);d.s='done'}else if(d.s==''&&S.queue.length){const o=S.queue[0],n=mem(o).name;if(mem(o).p){cancel(d,o);sys(`${n} ما قرّر وكان ممرّراً، تعلّقت تكسيدته`)}else{pass(d,o);d.s='none';sys(`${n} ما قرّر فاعتُبر ممرّراً`)}}}
+p=ld(new Date(new Date(p+'T12:00').getTime()+864e5))}if(S.proc!=t){S.proc=t;c=1}if(c){S.u=Date.now();put()}}
+const wk=t=>{const d=new Date(t);d.setDate(d.getDate()-(d.getDay()+1)%7);return ld(d)};
+const unread=()=>S.msgs.filter(m=>!m.sys&&m.from!=ME.id&&!(m.rd||{})[ME.id]).length;
+function panel(){const d=D(ld()),o=S.queue[0];let a='ما فيه جدول بعد',b='أول ما ينضم الأعضاء بينبني الدور',c='gr';
+if(S.queue.length){c='';if(d.s=='ok'){a='التكسيدة عند '+mem(d.host).name;b='جاي أو منش جاي؟'}else if(d.s=='none'){a='اليوم مافيش تكسيده';b='الدور يكمل بكرة'}else if(d.s=='cancel'){a='التكسيدة ملغاة اليوم';b='فيه متطوّع يديرها؟'}else if(d.s=='done'){a='انتهى اللقاء 👋';b='نلتقي بكرة'}else{a='الدور على '+mem(o).name;b='بانتظار قرار صاحب الدور'}}
+return`<div class="pn ${c}" data-t=take><small>لوحة حالة التكسيدة</small><h3>${esc(a)}</h3><small>${esc(b)}</small></div>`}
+const home=()=>{const l=S.msgs.filter(m=>!m.sys).pop(),n=unread(),f=S.fts.filter(x=>x.ty=='f').length,t=S.fts.filter(x=>x.ty=='t').length;
+return`<div class=top><span class=pill>${new Date().toLocaleDateString('ar',{weekday:'long',day:'numeric',month:'long'})}</span><a data-t=me>${av(ME,46)}<br><small class=m>ملفي</small></a></div>
+<h1>يا هلا <b class=o>${esc(ME.name)}</b></h1><p class=m style="padding:4px 16px;font-size:14px"><span style="color:var(--g)">●</span> متصلون الآن: ${ON.length} من ${ac().length} · ${S.queue.length} خانة في الدور</p>${panel()}
+<a class=cd data-t=chat><div class=ic style="background:var(--o)">💬</div><h3>هدرزه ${n?`<span class=tag>${n}</span>`:''}</h3><small class=m>${l?esc(mem(l.from).name+': '+l.text):'ما فيه رسائل بعد'}</small></a>
+<a class=cd data-t=take><div class=ic style="background:var(--g)">📅</div><h3>التكسيدات</h3><small class=m>${S.queue.length?'الدور على '+esc(mem(S.queue[0]).name):'ما فيه جدول بعد'}</small></a>
+<div class=g2><a class=cd data-t=t><div class=ic style="background:var(--p)">🔥</div><h3>تلحقها</h3><small class=m>${t?t+' تسجيل':'ما فيه نشاط بعد'}</small></a><a class=cd data-t=f><div class=ic style="background:var(--y)">😄</div><h3>فترشة</h3><small class=m>${f?f+' تسجيل':'ما فيه نشاط بعد'}</small></a></div>`}
+const chat=()=>{const mine=S.msgs.filter(m=>!m.sys&&m.from==ME.id).pop();let h='',lt=0,lf=null;
+S.msgs.forEach(m=>{if(m.t-lt>18e5){h+=`<div class=sep>${new Date(m.t).toLocaleTimeString('ar',{hour:'numeric',minute:'2-digit'})}</div>`;lf=null}lt=m.t;
+if(m.sys){h+=`<div class=sy>${esc(m.text)}</div>`;lf=null;return}
+const me=m.from==ME.id,f=mem(m.from),rs=Object.values(m.re||{});
+h+=`<div class="r ${me?'me':''}">${me?'':lf==m.from?'<span style="width:32px"></span>':av(f,32)}<div>${!me&&lf!=m.from?`<small class=m>${esc(f.name)}</small>`:''}<div class="b${m.big?' big':''}" data-id=${m.id}>${esc(m.text)}</div>${rs.length?`<div class=rc>${rs.join('')} ${rs.length}</div>`:''}${m===mine?`<small class=m>تم الإرسال ✓ ${Object.keys(m.rd||{}).filter(k=>k!=ME.id).map(k=>av(mem(k),14)).join('')}</small>`:''}</div></div>`;lf=m.from});
+return`<div class=ch><div class=hd><a data-t=home style="font-size:22px">→</a><div style="flex:1" data-a=mb><b>هدرزه</b><br><small class=m>متصلون الآن: ${ON.length} من ${ac().length}</small></div></div><div id=ms>${h}</div><div class=in><input id=i placeholder="اكتب رسالة..." autocomplete=off><button id=sb data-a=send>👍</button></div></div>`}
+const take=()=>{const t=ld(),d=D(t),o=S.queue[0],mo=o==ME.id,my=d.s==''&&mo;let h=panel();
+if(my)h+=`<div style="margin:0 16px"><button class=btn data-a=ok>تأكيد التكسيدة</button>${ME.p?`<button class="btn s" data-a=cant>مايسيرش مني اليوم</button>`:`<button class="btn s" data-a=pass>شوفو اللي بعدي (تمرير)</button>`}</div>`;
+if(d.s=='cancel'&&!d.pass.includes(ME.id))h+=`<div style="margin:0 16px"><button class=btn data-a=vol>اديرها اليوم؟</button></div>`;
+if(d.s=='ok'&&d.host==ME.id)h+=`<div style="margin:0 16px"><button class="btn gn" data-a=end>انتهى اللقاء</button></div>`;
+if(d.s=='ok'){const ids=ac().map(m=>m.id),y=ids.filter(i=>d.att[i]==1||i==d.host).length,n=ids.filter(i=>d.att[i]===0&&i!=d.host).length,w=ids.length-y-n;
+h+=`<div class=cd><b>الحضور</b><div class=bar><i style="width:${y/(y+n||1)*100}%"></i></div><small>${y} جاي · ${n} منش جاي · ${w} لم يردّ</small>${d.host!=ME.id?`<div class=g2 style="margin:8px 0 0"><button class="btn gn" data-a=att data-v=1>جاي</button><button class="btn s" data-a=att data-v=0>منش جاي</button></div>`:''}<div style="margin-top:8px">${ids.map(i=>`<span class="tag ${i==d.host||d.att[i]==1?'g':''}">${esc(mem(i).name)} ${i==d.host||d.att[i]==1?'✓':d.att[i]===0?'✕':'؟'}</span> `).join('')}</div></div>`}
+h+=`<div class=cd><h3>الجدول القادم</h3>`;S.queue.slice(0,5).forEach((q,i)=>{const dt=new Date(Date.now()+i*864e5),m=mem(q);h+=`<div class=row><div class=dy><small>${dt.toLocaleDateString('ar',{weekday:'long'})}</small><br><b>${dt.getDate()}</b></div>${av(m,32)}<div class=gr1>${esc(m.name)}</div>${i==0&&d.s==''?'<span class=tag>الدور</span>':''}${i==0&&d.s=='ok'?'<span class="tag g">المضيف الآن</span>':''}${i==0&&d.s=='cancel'?'<span class=tag>ملغاة</span>':''}</div>`});
+const past=Object.entries(S.days).filter(([k,v])=>k<t&&v.s=='done').sort().reverse().slice(0,5);
+return h+`</div><div class=cd><h3>آخر ما مضى</h3>${past.length?past.map(([k,v])=>`<div class=row><small>${k}</small>${av(mem(v.host),28)}<div>${esc(mem(v.host).name)}</div></div>`).join(''):'<small class=m>لا شيء بعد</small>'}</div>`}
+const pg=ty=>{const L=S.fts.filter(x=>x.ty==ty).sort((a,b)=>b.t-a.t),nm=ty=='f'?'فترشة':'تلحقها',col=ty=='f'?'var(--y)':'var(--p)',mo=ld().slice(0,7),cnt={},all={};
+L.forEach(x=>{all[x.who]=(all[x.who]||0)+1;if(x.d.slice(0,7)==mo)cnt[x.who]=(cnt[x.who]||0)+1});const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0],now=Date.now(),fri=new Date().getDay()==5;
+const cw=wk(now),lw=wk(now-6048e5),vk=ty+cw,V=S.votes[vk]||{};let vt='';
+if(fri){let w=L.filter(x=>wk(x.t)==cw);const tot=st.all?w:w.slice(0,5);vt=`<div class=cd><h3>🏆 تصويت الأسبوع</h3>${tot.map(x=>`<div class=row><div class=gr1><b>${esc(mem(x.who).name)}</b><br><small>${esc(x.text)}</small></div><button class="tag ${V[ME.id]==x.id?'g':''}" style="border:0" data-a=vote data-id=${x.id} data-ty=${ty}>${Object.values(V).filter(v=>v==x.id).length} 👍</button></div>`).join('')||'<small class=m>ما فيه مواقف هذا الأسبوع</small>'}${w.length>5&&!st.all?'<button class="btn s" data-a=all>عرض الكل</button>':''}</div>`}
+else{const lv=S.votes[ty+lw]||{},c={};Object.values(lv).forEach(v=>c[v]=(c[v]||0)+1);const b=Object.entries(c).sort((a,b)=>b[1]-a[1])[0],p=b&&S.fts.find(x=>x.id==b[0]);vt=`<div class=cd><h3>🏆 أقوى ${nm} الأسبوع الماضي</h3>${p?`<b>${esc(mem(p.who).name)}</b><br><small>${esc(p.text)} · ${b[1]} صوت</small>`:'<small class=m>ما فيه تصويت الأسبوع الماضي<br>التصويت يفتح يوم الجمعة فقط</small>'}</div>`}
+return`<div class=top><h2>${nm}</h2><button class=btn style="width:auto;padding:10px 18px;background:${col}" data-a=addp data-ty=${ty}>+ سجّل</button></div>
+<div class=cd style="background:#f6f1e7;color:#1d1a17"><small>وسام الشهر 🎖️</small><h3>${top?esc(mem(top[0]).name)+' · '+top[1]:'ما فيه مواقف هذا الشهر بعد'}</h3></div>${vt}
+<div class=cd><h3>أشخاص</h3>${Object.keys(all).length?Object.entries(all).map(([k,n])=>`<div class=row data-a=pp data-id=${k}>${av(mem(k),30)}<div class=gr1>${esc(mem(k).name)}</div><span class=tag>${n}</span></div>${st.pp==k?L.filter(x=>x.who==k).map(x=>`<small class=m style="display:block;padding:4px 14px">• ${esc(x.text)}</small>`).join(''):''}`).join(''):'<small class=m>ما فيه أحد بعد</small>'}</div>
+<div class=cd><h3>آخر ١٢ تسجيلاً</h3>${L.slice(0,12).map(x=>`<div class=row><div><b>${esc(mem(x.who).name)}</b><br><small>${esc(x.text)}</small></div></div>`).join('')||'<small class=m>ما فيه تسجيلات بعد</small>'}</div>`}
+const prof=()=>{const c=ty=>S.fts.filter(x=>x.ty==ty&&x.who==ME.id).length;return`<div class=top><a data-t=home style="font-size:22px">→</a><h2>ملفي</h2></div><div class=cd><div style="display:flex;gap:14px;align-items:center">${av(ME,80)}<div><h3 style="margin:0">${esc(ME.name)}</h3><small class=m>ترتيبك في الدور: ${S.queue.indexOf(ME.id)+1} من ${S.queue.length}</small></div></div>
+<div class=g2 style="margin:12px 0 0"><div class=row style="display:block;text-align:center"><b>${c('f')}</b><br><small>فترشة عليك</small></div><div class=row style="display:block;text-align:center"><b>${c('t')}</b><br><small>تلحقها عليك</small></div><div class=row style="display:block;text-align:center"><b>${S.fts.filter(x=>x.by==ME.id).length}</b><br><small>سجّلتها</small></div></div></div>
+<div style="margin:0 16px"><button class="btn s" data-a=pic>📷 تغيير الصورة</button><button class="btn s" data-a=push>🔔 تفعيل الإشعارات</button>${ME.admin?'<button class="btn s" data-a=adm>🛡️ إدارة الأعضاء</button>':''}<button class=btn data-a=out>تسجيل الخروج</button></div><p class=m style="text-align:center;margin-top:20px;font-size:13px">مرتين في النص</p>`}
+const login=()=>`<div style="padding:90px 24px;text-align:center"><h1 style="padding:0">مرتين في النص</h1><p class=m style="margin:10px 0 24px">أدخل رمزك للدخول</p><input id=cd dir=ltr style="text-align:center" placeholder="الرمز"><button class=btn data-a=login>دخول</button></div>`;
+function R(){if(!U||!ME){A.innerHTML=login();return}const iv=$('#i')&&$('#i').value,V={home,chat,take,f:()=>pg('f'),t:()=>pg('t'),me:prof};A.innerHTML=V[tab]()+(tab=='chat'||tab=='me'?'':`<nav>${[['home','🏠','الرئيسية'],['chat','💬','هدرزه'],['take','📅','التكسيدات'],['f','😄','فترشة'],['t','🔥','تلحقها']].map(([k,i,n])=>`<a data-t=${k} class="${tab==k?'on':''}"><span>${i}</span>${n}</a>`).join('')}</nav>`);
+if(tab=='chat'){const m=$('#ms');m.scrollTop=m.scrollHeight;const i=$('#i');if(iv){i.value=iv;$('#sb').textContent='➤'}let c=0;S.msgs.forEach(x=>{if(!x.sys){x.rd=x.rd||{};if(!x.rd[ME.id]){x.rd[ME.id]=1;c=1}}});if(c)setTimeout(save,300)}}
+function modal(h){M.innerHTML=`<div data-a=x style="position:absolute;inset:0"></div><div class=sh style="position:relative">${h}</div>`}
+const fmt=s=>s.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim();
+function adm(){modal(`<h3>إدارة الأعضاء</h3>${ac().map(m=>`<div class=row>${av(m,30)}<div class=gr1>${esc(m.name)}</div>${m.id!=ME.id?`<button class=tag style="border:0" data-a=code data-id=${m.id}>🔑</button><button class=tag style="border:0" data-a=del data-id=${m.id}>🗑</button>`:''}</div>`).join('')}<button class=btn data-a=add>+ إضافة عضو</button>`)}
+const inv=async b=>{const{data,error}=await sb.functions.invoke('admin-members',{body:b});if(error||!data||data.error){toast((data&&data.error)||'فشلت العملية');return null}return data};
+async function Ac(a,d){const t=ld(),dd=D(t),n=ME.name,ask=m=>confirm(m);
+if(a=='login'){const c=fmt($('#cd').value);if(!/^[A-Za-z0-9]{6,20}$/.test(c))return toast('الرمز حروف إنجليزية وأرقام (6 إلى 20)');const{data,error}=await sb.auth.signInWithPassword({email:c+'@shilla.app',password:c});if(error)return toast('رمز غير صحيح');U=data.user;return load()}
+if(a=='send'){const i=$('#i'),v=i.value.trim();S.msgs.push({id:nid(),from:ME.id,text:v||'👍',big:!v,t:Date.now(),re:{},rd:{[ME.id]:1}});i.value='';save();sb.functions.invoke('send-push',{body:{title:n,body:v||'👍',from:U.id}}).catch(()=>0)}
+if(a=='re'){const m=S.msgs.find(x=>x.id==d.id);if(m.re[ME.id]==d.e)delete m.re[ME.id];else m.re[ME.id]=d.e;M.innerHTML='';save()}
+if(a=='ok'&&ask('تأكيد التكسيدة اليوم؟')){dd.s='ok';dd.host=ME.id;dd.att[ME.id]=1;sys(`${n} أكّد التكسيدة اليوم 🎉`);save()}
+if(a=='pass'&&ask('تمرّر الدور؟')){if(dd.pass.length>=1){pass(dd,ME.id);dd.s='none';sys(`${n} مرّر أيضاً، اليوم مافيش تكسيده`)}else{pass(dd,ME.id);sys(`${n} مرّر الدور: شوفو اللي بعدي`)}save()}
+if(a=='cant'&&ask('مايسيرش منك اليوم؟')){cancel(dd,ME.id);sys(`${n}: مايسيرش مني اليوم، التكسيدة ملغاة. مين يديرها؟`);save()}
+if(a=='vol'&&ask('تدير التكسيدة اليوم؟')){dd.s='ok';dd.host=ME.id;dd.att[ME.id]=1;sys(`${n} تطوّع لإدارة التكسيدة اليوم 👏`);save()}
+if(a=='end'&&ask('انتهى اللقاء؟')){dd.s='done';dd.rolled=1;rot(dd.host);sys('انتهى لقاء اليوم، الدور يتحرّك للتالي');save()}
+if(a=='att'){dd.att[ME.id]=+d.v;save()}
+if(a=='addp')modal(`<h3>سجّل ${d.ty=='f'?'فترشة':'لحقة'}</h3><select id=w>${ac().map(m=>`<option value=${m.id}>${esc(m.name)}</option>`).join('')}</select><textarea id=x maxlength=80 rows=3 placeholder="اكتب الموقف (80 حرفاً)" style="margin-top:8px"></textarea><button class=btn data-a=padd data-ty=${d.ty}>تسجيل</button>`);
+if(a=='padd'){const x=$('#x').value.trim(),w=$('#w').value;if(!x)return;const p={id:nid(),ty:d.ty,who:w,by:ME.id,text:x,t:Date.now(),d:t};S.fts.push(p);sys(`${n} سجّل ${d.ty=='f'?'فترشة':'لحقة'} على ${mem(w).name} 😂`);M.innerHTML='';save()}
+if(a=='vote'){const k=d.ty+wk(Date.now());S.votes[k]=S.votes[k]||{};if(S.votes[k][ME.id]==d.id)delete S.votes[k][ME.id];else S.votes[k][ME.id]=d.id;save()}
+if(a=='all'){st.all=1;R()}if(a=='pp'){st.pp=st.pp==d.id?null:d.id;R()}if(a=='x')M.innerHTML='';
+if(a=='mb')modal(`<h3>الأعضاء</h3>${[...ac()].sort((x,y)=>ON.includes(y.id)-ON.includes(x.id)).map(m=>`<div class=row>${av(m,30)}<div class=gr1>${esc(m.name)}</div><small class=m>${ON.includes(m.id)?'🟢 متصل':'غير متصل'}</small></div>`).join('')}`);
+if(a=='out'){await sb.auth.signOut();U=ME=null;if(window.ch)sb.removeChannel(ch);R()}
+if(a=='pic'){const f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=()=>{const im=new Image;im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=128;const s=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,128,128);ME.av=c.toDataURL('image/jpeg',.7);save()};im.src=URL.createObjectURL(f.files[0])};f.click()}
+if(a=='push'){const p=await Notification.requestPermission();if(p!='granted')return toast('لم يتم السماح بالإشعارات');if(VAPID)try{const r=await navigator.serviceWorker.ready,k=Uint8Array.from(atob(VAPID.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0)),s=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:k});await sb.from('push_subs').upsert({uid:U.id,sub:s})}catch(e){}toast('تم تفعيل الإشعارات ✅')}
+if(a=='adm')adm();
+if(a=='add'){const nm=prompt('اسم العضو'),c=fmt(prompt('الرمز (6-20 حرفاً إنجليزياً/رقماً)')||'');if(!nm||!/^[A-Za-z0-9]{6,20}$/.test(c))return toast('بيانات غير صحيحة');const r=await inv({a:'add',code:c,name:nm});if(!r)return;const m={id:nid(),name:nm,uid:r.uid};S.members.push(m);S.queue.push(m.id);sys(`انضم ${nm} للشلّة 🎉`);save();adm()}
+if(a=='code'){const c=fmt(prompt('الرمز الجديد')||'');if(!/^[A-Za-z0-9]{6,20}$/.test(c))return;if(await inv({a:'code',uid:mem(d.id).uid,code:c}))toast('تم تغيير الرمز')}
+if(a=='del'&&ask('حذف هذا العضو؟')){const m=mem(d.id);if(await inv({a:'del',uid:m.uid})){m.del=1;S.queue=S.queue.filter(x=>x!=m.id);save();adm()}}}
+document.onclick=e=>{const x=e.target.closest('[data-t],[data-a]');if(!x)return;const{t,a}=x.dataset;if(t){tab=t;st={};M.innerHTML='';R()}else Ac(a,x.dataset)};
+document.onkeydown=e=>{if(e.key=='Enter'&&e.target.id=='i')Ac('send')};document.oninput=e=>{if(e.target.id=='i')$('#sb').textContent=e.target.value.trim()?'➤':'👍'};
+const rp=id=>modal(`<div class=em>${E.map(e=>`<span data-a=re data-id=${id} data-e=${e}>${e}</span>`).join('')}</div>`);let lp;
+document.addEventListener('pointerdown',e=>{const b=e.target.closest('.b');if(b)lp=setTimeout(()=>rp(b.dataset.id),450)});['pointerup','pointermove','pointercancel'].forEach(v=>document.addEventListener(v,()=>clearTimeout(lp)));
+document.ondblclick=e=>{const b=e.target.closest('.b');if(b)rp(b.dataset.id)};document.oncontextmenu=e=>{const b=e.target.closest('.b');if(b){e.preventDefault();rp(b.dataset.id)}};
+function connect(){if(window.ch)return;window.ch=sb.channel('room',{config:{presence:{key:ME.id}}});ch.on('presence',{event:'sync'},()=>{ON=Object.keys(ch.presenceState());R()}).subscribe(s=>{if(s=='SUBSCRIBED')ch.track({t:1})});
+sb.channel('db').on('postgres_changes',{event:'*',schema:'public',table:'app_state'},p=>{const n=p.new&&p.new.data;if(!n)return;const c=S.msgs.length;S=mrg(S,n);put();const l=S.msgs.slice(c).filter(m=>!m.sys&&m.from!=ME.id).pop();if(l&&(tab!='chat'||document.hidden)){toast(mem(l.from).name+': '+l.text);if(document.hidden&&Notification.permission=='granted')navigator.serviceWorker.ready.then(r=>r.showNotification(mem(l.from).name,{body:l.text,vibrate:[200,100,200]}))}R()}).subscribe()}
+async function load(){await sync();ME=ac().find(m=>m.uid==U.id);if(!ME){toast('هذا الرمز غير مفعّل، تواصل مع المضيف');await sb.auth.signOut();U=null;return R()}roll();connect();R();sync()}
+addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ME){roll();sync();R()}});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+sb.auth.getSession().then(({data})=>{if(data.session){U=data.session.user;load()}else R()});
+</script></body></html>
