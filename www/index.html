@@ -30,7 +30,7 @@ input,textarea,select{font:inherit;color:var(--t);background:var(--c);border:1px
 </style></head><body><div id=app></div><div id=m></div><div id=tt></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-const SB='https://YOUR-PROJECT.supabase.co',KEY='YOUR_ANON_KEY',VAPID='';
+const SB='https://gpfqycavufhkvqignwtq.supabase.co',KEY='sb_publishable_f6U0OocqaAHsBWlGAQDAGw_nu1E2Gni',VAPID='';
 const sb=supabase.createClient(SB,KEY),A=document.getElementById('app'),M=document.getElementById('m'),$=s=>document.querySelector(s);
 const ld=(d=new Date())=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10),nid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
 const E=['👍','❤️','😂','😮','😢','😡'],esc=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
@@ -96,7 +96,7 @@ function modal(h){M.innerHTML=`<div data-a=x style="position:absolute;inset:0"><
 const fmt=s=>s.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim();
 function adm(){modal(`<h3>إدارة الأعضاء</h3>${ac().map(m=>`<div class=row>${av(m,30)}<div class=gr1>${esc(m.name)}</div>${m.id!=ME.id?`<button class=tag style="border:0" data-a=code data-id=${m.id}>🔑</button><button class=tag style="border:0" data-a=del data-id=${m.id}>🗑</button>`:''}</div>`).join('')}<button class=btn data-a=add>+ إضافة عضو</button>`)}
 const inv=async b=>{const{data,error}=await sb.functions.invoke('admin-members',{body:b});if(error||!data||data.error){toast((data&&data.error)||'فشلت العملية');return null}return data};
-async function Ac(a,d){const t=ld(),dd=D(t),n=ME.name,ask=m=>confirm(m);
+async function Ac(a,d){const t=ld(),dd=D(t),n=ME?ME.name:'',ask=m=>confirm(m);
 if(a=='login'){const c=fmt($('#cd').value);if(!/^[A-Za-z0-9]{6,20}$/.test(c))return toast('الرمز حروف إنجليزية وأرقام (6 إلى 20)');const{data,error}=await sb.auth.signInWithPassword({email:c+'@shilla.app',password:c});if(error)return toast('رمز غير صحيح');U=data.user;return load()}
 if(a=='send'){const i=$('#i'),v=i.value.trim();S.msgs.push({id:nid(),from:ME.id,text:v||'👍',big:!v,t:Date.now(),re:{},rd:{[ME.id]:1}});i.value='';save();sb.functions.invoke('send-push',{body:{title:n,body:v||'👍',from:U.id}}).catch(()=>0)}
 if(a=='re'){const m=S.msgs.find(x=>x.id==d.id);if(m.re[ME.id]==d.e)delete m.re[ME.id];else m.re[ME.id]=d.e;M.innerHTML='';save()}
