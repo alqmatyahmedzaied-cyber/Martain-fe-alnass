@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 env:
-  SITE_URL: https://old-recipe-c5da.alqmatyahmedzaied.workers.dev
+  SITE_URL: https://marteen-fi-nas.pages.dev
 
 jobs:
   apk:
