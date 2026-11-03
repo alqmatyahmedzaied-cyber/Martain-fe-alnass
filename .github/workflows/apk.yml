@@ -1,0 +1,46 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  SITE_URL: https://old-recipe-c5da.alqmatyahmedzaied.workers.dev
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Point the app at the Cloudflare site
+        run: |
+          node -e "const fs=require('fs');const f='capacitor.config.json';const c=JSON.parse(fs.readFileSync(f));c.server={url:process.env.SITE_URL,cleartext:false};fs.writeFileSync(f,JSON.stringify(c,null,2))"
+          cat capacitor.config.json
+
+      - name: Use a fixed signing key (so new APKs update over old ones)
+        run: |
+          mkdir -p ~/.android
+          echo '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' | base64 -d > ~/.android/debug.keystore
+
+      - run: npm install
+      - run: npx cap add android && npx cap sync android
+      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk marteen-fi-nas.apk
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: النسخة ${{ github.run_number }}
+          generate_release_notes: true
+          files: marteen-fi-nas.apk
+        
