@@ -1,0 +1,367 @@
+name: build-apk
+
+# تشغيل يدوي من تبويب Actions ← build-apk ← Run workflow
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'رقم الإصدار (مثال 4.1.0)'
+        required: true
+        default: '4.1.0'
+      site_url:
+        description: 'رابط الموقع الذي يحمّله التطبيق'
+        required: true
+        default: 'https://marteen-fi-nas.pages.dev'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VN: ${{ inputs.version_name }}
+      SITE: ${{ inputs.site_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Version code
+        run: |
+          IFS=. read -r A B C <<< "$VN"
+          echo "VC=$((A*10000 + B*100 + C))" >> "$GITHUB_ENV"
+
+      - name: Create Capacitor project
+        run: |
+          mkdir app && cd app
+          npm init -y > /dev/null
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          mkdir www
+          echo '<!doctype html><meta charset="utf-8"><title>مرتين في النص</title>' > www/index.html
+          cat > capacitor.config.json <<JSON
+          {
+            "appId": "app.shilla.marteen",
+            "appName": "مرتين في النص",
+            "webDir": "www",
+            "server": { "url": "$SITE", "cleartext": false },
+            "android": { "allowMixedContent": false }
+          }
+          JSON
+          npx cap add android
+
+      - name: Native code (bridge + immersive mode)
+        run: |
+          D=app/android/app/src/main/java/app/shilla/marteen
+          cat > $D/MarteenNative.java <<'JAVA'
+          package app.shilla.marteen;
+
+          import android.app.Activity;
+          import android.content.Intent;
+          import android.content.pm.PackageInfo;
+          import android.content.pm.PackageManager;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.provider.Settings;
+          import android.webkit.JavascriptInterface;
+          import android.webkit.WebView;
+          import androidx.core.content.FileProvider;
+          import java.io.File;
+          import java.io.FileOutputStream;
+          import java.io.InputStream;
+          import java.net.HttpURLConnection;
+          import java.net.URL;
+
+          public class MarteenNative {
+              private final Activity act;
+              private final WebView web;
+              private volatile boolean busy = false;
+              private File apk = null;
+
+              public MarteenNative(Activity a, WebView w) { act = a; web = w; }
+
+              private void js(final String code) {
+                  act.runOnUiThread(() -> web.evaluateJavascript(code, null));
+              }
+
+              @JavascriptInterface
+              public String getInsets() { return "0,0"; }
+
+              @JavascriptInterface
+              public String getInfo() {
+                  try {
+                      PackageInfo p = act.getPackageManager().getPackageInfo(act.getPackageName(), 0);
+                      long vc = Build.VERSION.SDK_INT >= 28 ? p.getLongVersionCode() : p.versionCode;
+                      return p.versionName + "," + vc;
+                  } catch (Exception e) { return ""; }
+              }
+
+              @JavascriptInterface
+              public void installApk(final String url) {
+                  if (busy) return;
+                  busy = true;
+                  new Thread(() -> {
+                      try {
+                          File dir = new File(act.getCacheDir(), "updates");
+                          dir.mkdirs();
+                          File f = new File(dir, "update.apk");
+                          if (f.exists()) f.delete();
+                          HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+                          c.setConnectTimeout(20000);
+                          c.setReadTimeout(30000);
+                          c.setInstanceFollowRedirects(true);
+                          if (c.getResponseCode() != 200) { js("window.__apkDone&&__apkDone('err')"); return; }
+                          long total = c.getContentLengthLong();
+                          long got = 0;
+                          int last = -1;
+                          try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(f)) {
+                              byte[] buf = new byte[32768];
+                              int n;
+                              while ((n = in.read(buf)) > 0) {
+                                  out.write(buf, 0, n);
+                                  got += n;
+                                  if (total > 0) {
+                                      int p = (int) (got * 100 / total);
+                                      if (p != last) { last = p; js("window.__apkProg&&__apkProg(" + p + ")"); }
+                                  }
+                              }
+                          }
+                          PackageManager pm = act.getPackageManager();
+                          PackageInfo pi = pm.getPackageArchiveInfo(f.getAbsolutePath(), 0);
+                          if (pi == null || !act.getPackageName().equals(pi.packageName)) {
+                              js("window.__apkMsg='الملف المنشور ليس تطبيق مرتين في النص';window.__apkDone&&__apkDone('bad')");
+                              return;
+                          }
+                          PackageInfo cur = pm.getPackageInfo(act.getPackageName(), 0);
+                          long nv = Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
+                          long cv = Build.VERSION.SDK_INT >= 28 ? cur.getLongVersionCode() : cur.versionCode;
+                          if (nv <= cv) {
+                              js("window.__apkMsg='الملف المنشور ليس أحدث من المثبّت حالياً';window.__apkDone&&__apkDone('bad')");
+                              return;
+                          }
+                          apk = f;
+                          launch();
+                      } catch (Exception e) {
+                          js("window.__apkDone&&__apkDone('err')");
+                      } finally {
+                          busy = false;
+                      }
+                  }).start();
+              }
+
+              private void launch() {
+                  if (apk == null || !apk.exists()) { js("window.__apkDone&&__apkDone('err')"); return; }
+                  if (Build.VERSION.SDK_INT >= 26 && !act.getPackageManager().canRequestPackageInstalls()) {
+                      Intent s = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + act.getPackageName()));
+                      s.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                      act.startActivity(s);
+                      js("window.__apkDone&&__apkDone('perm')");
+                      return;
+                  }
+                  Uri u = FileProvider.getUriForFile(act, act.getPackageName() + ".fileprovider", apk);
+                  Intent i = new Intent(Intent.ACTION_VIEW);
+                  i.setDataAndType(u, "application/vnd.android.package-archive");
+                  i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                  act.startActivity(i);
+                  js("window.__apkDone&&__apkDone('ok')");
+              }
+
+              @JavascriptInterface
+              public boolean openApk() {
+                  act.runOnUiThread(this::launch);
+                  return apk != null && apk.exists();
+              }
+          }
+          JAVA
+          cat > $D/MainActivity.java <<'JAVA'
+          package app.shilla.marteen;
+
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle b) {
+                  super.onCreate(b);
+                  WebView w = getBridge().getWebView();
+                  w.addJavascriptInterface(new MarteenNative(this, w), "MarteenNative");
+                  w.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+                  w.setVerticalScrollBarEnabled(false);
+                  w.setHorizontalScrollBarEnabled(false);
+                  hideBars();
+              }
+
+              @Override
+              public void onResume() {
+                  super.onResume();
+                  hideBars();
+              }
+
+              @Override
+              public void onWindowFocusChanged(boolean hasFocus) {
+                  super.onWindowFocusChanged(hasFocus);
+                  if (hasFocus) hideBars();
+              }
+
+              /* إخفاء شريط الإيماءات/التنقل: يظهر مؤقتاً فقط عند السحب من الحافة */
+              private void hideBars() {
+                  WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+                  c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                  c.hide(WindowInsetsCompat.Type.navigationBars());
+              }
+          }
+          JAVA
+
+      - name: Patch manifest, version, icons, signing
+        run: |
+          pip install pillow
+          python3 - <<'PY'
+          import os, re, glob, urllib.request
+          from PIL import Image, ImageDraw
+
+          VN = os.environ['VN']; VC = os.environ['VC']; SITE = os.environ['SITE']
+          base = 'app/android/app'
+          man = base + '/src/main/AndroidManifest.xml'
+          s = open(man, encoding='utf8').read()
+          perms = ['RECORD_AUDIO', 'MODIFY_AUDIO_SETTINGS', 'POST_NOTIFICATIONS', 'VIBRATE', 'REQUEST_INSTALL_PACKAGES']
+          add = ''.join('    <uses-permission android:name="android.permission.%s" />\n' % p for p in perms if 'android.permission.%s"' % p not in s)
+          add += '    <uses-feature android:name="android.hardware.microphone" android:required="false" />\n'
+          s = s.replace('<application', add + '    <application', 1)
+          s = s.replace('<activity', '<activity android:windowSoftInputMode="adjustResize" android:screenOrientation="portrait"', 1)
+          open(man, 'w', encoding='utf8').write(s)
+
+          g = base + '/build.gradle'
+          t = open(g, encoding='utf8').read()
+          t = re.sub(r'versionCode\s+\d+', 'versionCode ' + VC, t, 1)
+          t = re.sub(r'versionName\s+"[^"]*"', 'versionName "' + VN + '"', t, 1)
+          t += '''
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file(System.getenv("KS_FILE"))
+                      storePassword System.getenv("KS_PASS")
+                      keyAlias "marteen"
+                      keyPassword System.getenv("KS_PASS")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          '''
+          open(g, 'w', encoding='utf8').write(t)
+
+          res = base + '/src/main/res'
+          st = res + '/values/styles.xml'
+          if os.path.exists(st):
+              x = open(st, encoding='utf8').read()
+              if 'Theme.SplashScreen' in x and 'windowSplashScreenBackground' not in x:
+                  x = re.sub(r'(<style name="AppTheme\.NoActionBarLaunch"[^>]*>)', r'\1\n        <item name="windowSplashScreenBackground">#0e1113</item>', x, 1)
+                  open(st, 'w', encoding='utf8').write(x)
+
+          try:
+              urllib.request.urlretrieve(SITE.rstrip('/') + '/icon-512.png', 'icon.png')
+              src = Image.open('icon.png').convert('RGBA')
+              for d, sz in {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}.items():
+                  p = '%s/mipmap-%s' % (res, d)
+                  os.makedirs(p, exist_ok=True)
+                  im = src.resize((sz, sz), Image.LANCZOS)
+                  im.save(p + '/ic_launcher.png')
+                  m = Image.new('L', (sz, sz), 0)
+                  ImageDraw.Draw(m).ellipse((0, 0, sz - 1, sz - 1), fill=255)
+                  r = im.copy(); r.putalpha(m); r.save(p + '/ic_launcher_round.png')
+              for f in glob.glob(res + '/mipmap-anydpi-v26/*.xml'):
+                  os.remove(f)
+              for f in glob.glob(res + '/drawable*/splash.png'):
+                  w, h = Image.open(f).size
+                  bg = Image.new('RGB', (w, h), (14, 17, 19))
+                  k = int(min(w, h) * 0.28)
+                  ic = src.resize((k, k), Image.LANCZOS)
+                  bg.paste(ic, ((w - k) // 2, (h - k) // 2), ic)
+                  bg.save(f)
+              print('icons ok')
+          except Exception as e:
+              print('icon step skipped:', e)
+          print('patch done')
+          PY
+
+      - name: Signing key
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ks" keyout
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASSWORD" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/ks/marteen.jks"
+            echo "KS_PASS=$KS_PASSWORD" >> "$GITHUB_ENV"
+            echo "NEW_KEY=0" >> "$GITHUB_ENV"
+          else
+            P=$(openssl rand -hex 12)
+            echo "::add-mask::$P"
+            keytool -genkeypair -keystore "$RUNNER_TEMP/ks/marteen.jks" -alias marteen -keyalg RSA -keysize 2048 -validity 12000 -storepass "$P" -keypass "$P" -dname "CN=Marteen Fi Nas, O=Shilla, C=LY"
+            base64 -w0 "$RUNNER_TEMP/ks/marteen.jks" > keyout/KEYSTORE_BASE64.txt
+            echo -n "$P" > keyout/KEYSTORE_PASSWORD.txt
+            echo "KS_PASS=$P" >> "$GITHUB_ENV"
+            echo "NEW_KEY=1" >> "$GITHUB_ENV"
+          fi
+          echo "KS_FILE=$RUNNER_TEMP/ks/marteen.jks" >> "$GITHUB_ENV"
+
+      - name: Build APK
+        working-directory: app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Collect APK
+        run: |
+          cp app/android/app/build/outputs/apk/release/app-release.apk marteen-fi-nas.apk
+          BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs marteen-fi-nas.apk || true
+          ls -la marteen-fi-nas.apk
+
+      - name: Save the signing key (first run only)
+        if: env.NEW_KEY == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAVE-THIS-signing-key
+          path: keyout/
+          retention-days: 30
+
+      - name: Instructions
+        if: env.NEW_KEY == '1'
+        run: |
+          {
+            echo "## مهم: احفظ مفتاح التوقيع"
+            echo "أُنشئ مفتاح توقيع جديد في هذه التشغيلة. نزّل ملف الـ artifact باسم SAVE-THIS-signing-key"
+            echo "ثم أنشئ سرّين في Settings ← Secrets and variables ← Actions:"
+            echo "- KEYSTORE_BASE64 = محتوى ملف KEYSTORE_BASE64.txt"
+            echo "- KEYSTORE_PASSWORD = محتوى ملف KEYSTORE_PASSWORD.txt"
+            echo "بدونهما سيفشل تحديث التطبيق فوق النسخة المثبتة في التشغيلات القادمة."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marteen-fi-nas-apk
+          path: marteen-fi-nas.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version_name }}
+          name: مرتين في النص ${{ inputs.version_name }}
+          files: marteen-fi-nas.apk
+          make_latest: true
+          
