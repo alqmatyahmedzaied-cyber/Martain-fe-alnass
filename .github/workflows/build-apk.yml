@@ -1,13 +1,16 @@
 name: build-apk
 
-# تشغيل يدوي من تبويب Actions ← build-apk ← Run workflow
 on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: 'رقم الإصدار (مثال 4.1.0)'
+        description: 'رقم الإصدار (مثال 4.3.0)'
         required: true
-        default: '4.2.0'
+        default: '4.3.0'
+      notes:
+        description: 'شنو الجديد؟ يطلع في نافذة التحديث (أضف [force] لو التحديث لازم)'
+        required: false
+        default: 'تصميم جديد وأيقونة جديدة وإشعارات أحسن.'
       site_url:
         description: 'رابط الموقع الذي يحمّله التطبيق'
         required: true
@@ -85,135 +88,140 @@ jobs:
           import java.net.HttpURLConnection;
           import java.net.URL;
           public class MarteenNative {
-            private final Activity act;
-            private final WebView web;
-            public static volatile String INS = "0,0";
-            private volatile boolean busy = false;
-            private File apk = null;
-            public MarteenNative(Activity a, WebView w) { act = a; web = w; }
-            private void js(final String code) {
-              act.runOnUiThread(() -> web.evaluateJavascript(code, null));
-            }
-            @JavascriptInterface
-            public String getInsets() { return INS; }
+          private final Activity act;
+          private final WebView web;
+          public static volatile String INS = "0,0";
+          private volatile boolean busy = false;
+          private File apk = null;
+          public MarteenNative(Activity a, WebView w) { act = a; web = w; }
+          private void js(final String code) {
+          act.runOnUiThread(() -> web.evaluateJavascript(code, null));
+          }
+          @JavascriptInterface
+          public String getInsets() { return INS; }
           @JavascriptInterface
           public void setBars(final boolean lightTheme) {
-            act.runOnUiThread(() -> {
-              WindowInsetsControllerCompat c = WindowCompat.getInsetsController(act.getWindow(), act.getWindow().getDecorView());
-              c.setAppearanceLightStatusBars(lightTheme);
-            });
+          act.runOnUiThread(() -> {
+          WindowInsetsControllerCompat c = WindowCompat.getInsetsController(act.getWindow(), act.getWindow().getDecorView());
+          c.setAppearanceLightStatusBars(lightTheme);
+          });
           }
           @JavascriptInterface
           public void askNotif() {
-            if (Build.VERSION.SDK_INT >= 33 && act.checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
-              act.runOnUiThread(() -> act.requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 77));
-            }
+          if (Build.VERSION.SDK_INT >= 33 && act.checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+          act.runOnUiThread(() -> act.requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 77));
+          }
           }
           @JavascriptInterface
           public void notify(final String title, final String body, final String tag) {
-            try {
-              Context c = act.getApplicationContext();
-              NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
-              if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel("chat") == null) {
-                NotificationChannel ch = new NotificationChannel("chat", "الرسائل", NotificationManager.IMPORTANCE_HIGH);
-                ch.enableVibration(true);
-                nm.createNotificationChannel(ch);
-              }
-              Intent i = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
-              i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-              PendingIntent pi = PendingIntent.getActivity(c, 0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-              int ic = c.getResources().getIdentifier("ic_stat", "drawable", c.getPackageName());
-              if (ic == 0) ic = c.getApplicationInfo().icon;
-              NotificationCompat.Builder b = new NotificationCompat.Builder(c, "chat")
-                .setSmallIcon(ic).setContentTitle(title).setContentText(body)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
-                .setAutoCancel(true).setContentIntent(pi)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setDefaults(NotificationCompat.DEFAULT_ALL);
-              nm.notify(tag == null ? 0 : tag.hashCode(), b.build());
-            } catch (Exception e) { }
+          try {
+          Context c = act.getApplicationContext();
+          NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+          if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel("chat") == null) {
+          NotificationChannel ch = new NotificationChannel("chat", "الرسائل", NotificationManager.IMPORTANCE_HIGH);
+          ch.enableVibration(true);
+          nm.createNotificationChannel(ch);
           }
-            @JavascriptInterface
-            public String getInfo() {
-              try {
-                PackageInfo p = act.getPackageManager().getPackageInfo(act.getPackageName(), 0);
-                long vc = Build.VERSION.SDK_INT >= 28 ? p.getLongVersionCode() : p.versionCode;
-                return p.versionName + "," + vc;
-              } catch (Exception e) { return ""; }
-            }
-            @JavascriptInterface
-            public void installApk(final String url) {
-              if (busy) return;
-              busy = true;
-              new Thread(() -> {
-                try {
-                  File dir = new File(act.getCacheDir(), "updates");
-                  dir.mkdirs();
-                  File f = new File(dir, "update.apk");
-                  if (f.exists()) f.delete();
-                  HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
-                  c.setConnectTimeout(20000);
-                  c.setReadTimeout(30000);
-                  c.setInstanceFollowRedirects(true);
-                  if (c.getResponseCode() != 200) { js("window.__apkDone&&__apkDone('err')"); return; }
-                  long total = c.getContentLengthLong();
-                  long got = 0;
-                  int last = -1;
-                  try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(f)) {
-                    byte[] buf = new byte[32768];
-                    int n;
-                    while ((n = in.read(buf)) > 0) {
-                      out.write(buf, 0, n);
-                      got += n;
-                      if (total > 0) {
-                        int p = (int) (got * 100 / total);
-                        if (p != last) { last = p; js("window.__apkProg&&__apkProg(" + p + ")"); }
-                      }
-                    }
-                  }
-                  PackageManager pm = act.getPackageManager();
-                  PackageInfo pi = pm.getPackageArchiveInfo(f.getAbsolutePath(), 0);
-                  if (pi == null || !act.getPackageName().equals(pi.packageName)) {
-                    js("window.__apkMsg='الملف المنشور ليس تطبيق مرتين في النص';window.__apkDone&&__apkDone('bad')");
-                    return;
-                  }
-                  PackageInfo cur = pm.getPackageInfo(act.getPackageName(), 0);
-                  long nv = Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
-                  long cv = Build.VERSION.SDK_INT >= 28 ? cur.getLongVersionCode() : cur.versionCode;
-                  if (nv <= cv) {
-                    js("window.__apkMsg='الملف المنشور ليس أحدث من المثبّت حالياً';window.__apkDone&&__apkDone('bad')");
-                    return;
-                  }
-                  apk = f;
-                  launch();
-                } catch (Exception e) {
-                  js("window.__apkDone&&__apkDone('err')");
-                } finally {
-                  busy = false;
-                }
-              }).start();
-            }
-            private void launch() {
-              if (apk == null || !apk.exists()) { js("window.__apkDone&&__apkDone('err')"); return; }
-              if (Build.VERSION.SDK_INT >= 26 && !act.getPackageManager().canRequestPackageInstalls()) {
-                Intent s = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + act.getPackageName()));
-                s.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                act.startActivity(s);
-                js("window.__apkDone&&__apkDone('perm')");
-                return;
-              }
-              Uri u = FileProvider.getUriForFile(act, act.getPackageName() + ".fileprovider", apk);
-              Intent i = new Intent(Intent.ACTION_VIEW);
-              i.setDataAndType(u, "application/vnd.android.package-archive");
-              i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-              act.startActivity(i);
-              js("window.__apkDone&&__apkDone('ok')");
-            }
-            @JavascriptInterface
-            public boolean openApk() {
-              act.runOnUiThread(this::launch);
-              return apk != null && apk.exists();
-            }
+          android.graphics.Bitmap lb = null;
+          try {
+          int li = c.getResources().getIdentifier("ic_launcher", "mipmap", c.getPackageName());
+          if (li != 0) lb = android.graphics.BitmapFactory.decodeResource(c.getResources(), li);
+          } catch (Exception e) { }
+          Intent i = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
+          i.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+          PendingIntent pi = PendingIntent.getActivity(c, 0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+          int ic = c.getResources().getIdentifier("ic_stat", "drawable", c.getPackageName());
+          if (ic == 0) ic = c.getApplicationInfo().icon;
+          NotificationCompat.Builder b = new NotificationCompat.Builder(c, "chat")
+          .setSmallIcon(ic).setColor(0xFF4D5DFA).setLargeIcon(lb).setContentTitle(title).setContentText(body)
+          .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+          .setAutoCancel(true).setContentIntent(pi)
+          .setPriority(NotificationCompat.PRIORITY_HIGH)
+          .setDefaults(NotificationCompat.DEFAULT_ALL);
+          nm.notify(tag == null ? 0 : tag.hashCode(), b.build());
+          } catch (Exception e) { }
+          }
+          @JavascriptInterface
+          public String getInfo() {
+          try {
+          PackageInfo p = act.getPackageManager().getPackageInfo(act.getPackageName(), 0);
+          long vc = Build.VERSION.SDK_INT >= 28 ? p.getLongVersionCode() : p.versionCode;
+          return p.versionName + "," + vc;
+          } catch (Exception e) { return ""; }
+          }
+          @JavascriptInterface
+          public void installApk(final String url) {
+          if (busy) return;
+          busy = true;
+          new Thread(() -> {
+          try {
+          File dir = new File(act.getCacheDir(), "updates");
+          dir.mkdirs();
+          File f = new File(dir, "update.apk");
+          if (f.exists()) f.delete();
+          HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+          c.setConnectTimeout(20000);
+          c.setReadTimeout(30000);
+          c.setInstanceFollowRedirects(true);
+          if (c.getResponseCode() != 200) { js("window.__apkDone&&__apkDone('err')"); return; }
+          long total = c.getContentLengthLong();
+          long got = 0;
+          int last = -1;
+          try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(f)) {
+          byte[] buf = new byte[32768];
+          int n;
+          while ((n = in.read(buf)) > 0) {
+          out.write(buf, 0, n);
+          got += n;
+          if (total > 0) {
+          int p = (int) (got * 100 / total);
+          if (p != last) { last = p; js("window.__apkProg&&__apkProg(" + p + ")"); }
+          }
+          }
+          }
+          PackageManager pm = act.getPackageManager();
+          PackageInfo pi = pm.getPackageArchiveInfo(f.getAbsolutePath(), 0);
+          if (pi == null || !act.getPackageName().equals(pi.packageName)) {
+          js("window.__apkMsg='الملف المنشور مش تطبيق مرتين في النص';window.__apkDone&&__apkDone('bad')");
+          return;
+          }
+          PackageInfo cur = pm.getPackageInfo(act.getPackageName(), 0);
+          long nv = Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
+          long cv = Build.VERSION.SDK_INT >= 28 ? cur.getLongVersionCode() : cur.versionCode;
+          if (nv <= cv) {
+          js("window.__apkMsg='الملف المنشور مش أحدث من اللي عندك';window.__apkDone&&__apkDone('bad')");
+          return;
+          }
+          apk = f;
+          launch();
+          } catch (Exception e) {
+          js("window.__apkDone&&__apkDone('err')");
+          } finally {
+          busy = false;
+          }
+          }).start();
+          }
+          private void launch() {
+          if (apk == null || !apk.exists()) { js("window.__apkDone&&__apkDone('err')"); return; }
+          if (Build.VERSION.SDK_INT >= 26 && !act.getPackageManager().canRequestPackageInstalls()) {
+          Intent s = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + act.getPackageName()));
+          s.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+          act.startActivity(s);
+          js("window.__apkDone&&__apkDone('perm')");
+          return;
+          }
+          Uri u = FileProvider.getUriForFile(act, act.getPackageName() + ".fileprovider", apk);
+          Intent i = new Intent(Intent.ACTION_VIEW);
+          i.setDataAndType(u, "application/vnd.android.package-archive");
+          i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+          act.startActivity(i);
+          js("window.__apkDone&&__apkDone('ok')");
+          }
+          @JavascriptInterface
+          public boolean openApk() {
+          act.runOnUiThread(this::launch);
+          return apk != null && apk.exists();
+          }
           }
           JAVA
           cat > $D/MainActivity.java <<'JAVA'
@@ -229,50 +237,48 @@ jobs:
           import androidx.core.view.WindowInsetsControllerCompat;
           import com.getcapacitor.BridgeActivity;
           public class MainActivity extends BridgeActivity {
-            @Override
-            public void onCreate(Bundle b) {
-              super.onCreate(b);
-              final WebView w = getBridge().getWebView();
-              w.addJavascriptInterface(new MarteenNative(this, w), "MarteenNative");
-              w.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
-              w.setVerticalScrollBarEnabled(false);
-              w.setHorizontalScrollBarEnabled(false);
-              w.setBackgroundColor(0xFF0E1113);
-              /* شاشة كاملة: المحتوى تحت شريط الحالة، ونمرّر الهوامش للصفحة */
-              WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-              getWindow().setStatusBarColor(Color.TRANSPARENT);
-              getWindow().setNavigationBarColor(Color.TRANSPARENT);
-              final View root = findViewById(android.R.id.content);
-              ViewCompat.setOnApplyWindowInsetsListener(root, (v, ins) -> {
-                Insets sys = ins.getInsets(WindowInsetsCompat.Type.systemBars());
-                Insets ime = ins.getInsets(WindowInsetsCompat.Type.ime());
-                float d = getResources().getDisplayMetrics().density;
-                int kb = Math.max(0, ime.bottom);
-                v.setPadding(0, 0, 0, kb);
-                final int top = Math.round(sys.top / d);
-                final int bot = kb > 0 ? 0 : Math.round(sys.bottom / d);
-                MarteenNative.INS = top + "," + bot;
-                w.post(() -> w.evaluateJavascript("window.__setInsets&&__setInsets(" + top + "," + bot + ")", null));
-                return WindowInsetsCompat.CONSUMED;
-              });
-              hideBars();
-            }
-            @Override
-            public void onResume() {
-              super.onResume();
-              hideBars();
-            }
-            @Override
-            public void onWindowFocusChanged(boolean hasFocus) {
-              super.onWindowFocusChanged(hasFocus);
-              if (hasFocus) hideBars();
-            }
-            /* إخفاء شريط الإيماءات/التنقل فقط، وشريط الحالة يبقى ظاهراً ومتكاملاً */
-            private void hideBars() {
-              WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-              c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-              c.hide(WindowInsetsCompat.Type.navigationBars());
-            }
+          @Override
+          public void onCreate(Bundle b) {
+          super.onCreate(b);
+          final WebView w = getBridge().getWebView();
+          w.addJavascriptInterface(new MarteenNative(this, w), "MarteenNative");
+          w.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+          w.setVerticalScrollBarEnabled(false);
+          w.setHorizontalScrollBarEnabled(false);
+          w.setBackgroundColor(0xFF161825);
+          WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+          getWindow().setStatusBarColor(Color.TRANSPARENT);
+          getWindow().setNavigationBarColor(Color.TRANSPARENT);
+          final View root = findViewById(android.R.id.content);
+          ViewCompat.setOnApplyWindowInsetsListener(root, (v, ins) -> {
+          Insets sys = ins.getInsets(WindowInsetsCompat.Type.systemBars());
+          Insets ime = ins.getInsets(WindowInsetsCompat.Type.ime());
+          float d = getResources().getDisplayMetrics().density;
+          int kb = Math.max(0, ime.bottom);
+          v.setPadding(0, 0, 0, kb);
+          final int top = Math.round(sys.top / d);
+          final int bot = kb > 0 ? 0 : Math.round(sys.bottom / d);
+          MarteenNative.INS = top + "," + bot;
+          w.post(() -> w.evaluateJavascript("window.__setInsets&&__setInsets(" + top + "," + bot + ")", null));
+          return WindowInsetsCompat.CONSUMED;
+          });
+          hideBars();
+          }
+          @Override
+          public void onResume() {
+          super.onResume();
+          hideBars();
+          }
+          @Override
+          public void onWindowFocusChanged(boolean hasFocus) {
+          super.onWindowFocusChanged(hasFocus);
+          if (hasFocus) hideBars();
+          }
+          private void hideBars() {
+          WindowInsetsControllerCompat c = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+          c.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+          c.hide(WindowInsetsCompat.Type.navigationBars());
+          }
           }
           JAVA
 
@@ -322,7 +328,7 @@ jobs:
           if os.path.exists(st):
               x = open(st, encoding='utf8').read()
               if 'Theme.SplashScreen' in x and 'windowSplashScreenBackground' not in x:
-                  x = re.sub(r'(<style name="AppTheme\.NoActionBarLaunch"[^>]*>)', r'\1\n        <item name="windowSplashScreenBackground">#0e1113</item>', x, 1)
+                  x = re.sub(r'(<style name="AppTheme\.NoActionBarLaunch"[^>]*>)', r'\1\n        <item name="windowSplashScreenBackground">#161825</item>', x, 1)
                   open(st, 'w', encoding='utf8').write(x)
 
           try:
@@ -340,7 +346,7 @@ jobs:
                   os.remove(f)
               for f in glob.glob(res + '/drawable*/splash.png'):
                   w, h = Image.open(f).size
-                  bg = Image.new('RGB', (w, h), (14, 17, 19))
+                  bg = Image.new('RGB', (w, h), (22, 24, 37))
                   k = int(min(w, h) * 0.28)
                   ic = src.resize((k, k), Image.LANCZOS)
                   bg.paste(ic, ((w - k) // 2, (h - k) // 2), ic)
@@ -420,6 +426,7 @@ jobs:
         with:
           tag_name: v${{ inputs.version_name }}
           name: مرتين في النص ${{ inputs.version_name }}
+          body: ${{ inputs.notes }}
           files: marteen-fi-nas.apk
           make_latest: true
           
